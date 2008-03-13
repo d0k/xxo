@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<project default="compile" basedir=".">
+	<target name="compile">
+		<javac srcdir="." destdir="." target="1.5" source="1.5"/>
+	</target>
+	
+	<target name="jar" depends="compile">
+		<manifest file="MANIFEST.MF">
+			<attribute name="Main-Class" value="Start" />
+		</manifest>
+		<jar destfile="xxo.jar" manifest="MANIFEST.MF">
+			<fileset dir=".">
+				<include name="*.class"/>
+			</fileset>
+		</jar>
+	</target>
+	
+	<target name="clean">
+		<delete>
+			<fileset dir=".">
+				<include name="*.class"/>
+				<include name="MANIFEST.MF"/>
+			</fileset>
+		</delete>
+	</target>
+	
+</project>
