@@ -6,13 +6,9 @@
 	
 	<target name="jar" depends="compile">
 		<manifest file="MANIFEST.MF">
-			<attribute name="Main-Class" value="Start" />
+			<attribute name="Main-Class" value="Start"/>
 		</manifest>
-		<jar destfile="xxo.jar" manifest="MANIFEST.MF">
-			<fileset dir=".">
-				<include name="*.class"/>
-			</fileset>
-		</jar>
+		<jar destfile="xxo.jar" manifest="MANIFEST.MF" basedir="." includes="*.class"/>
 	</target>
 	
 	<target name="clean">

@@ -16,11 +16,11 @@ public class Protocol {
 	public static int opcode(int input) {
 		return (input & 0xF0) >> 4;
 	}
-	
+
 	public static int x(int input) {
 		return (input & 0xC) >> 2;
 	}
-	
+
 	public static int y(int input) {
 		return input & 3;
 	}

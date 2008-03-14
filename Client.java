@@ -36,10 +36,9 @@ public class Client extends Frame {
 
 	private void set(int x, int y) {
 		try {
-			byte b = 0;
-			b |= (x&3) << 2;
+			int b = (x&3) << 2;
 			b |= (y&3);
-			server.getOutputStream().write((int)b);
+			server.getOutputStream().write(b);
 		} catch (IOException e) {}
 	}
 
@@ -77,26 +76,26 @@ public class Client extends Frame {
 			while (!done) {
 				try {
 					byte got = (byte)server.getInputStream().read();
-					int x = Protocol.x(got) ;
-			int y = Protocol.y(got) ;
-			if (Protocol.opcode(got)  == 1) {
-				grid[x][y] = Server.States.X;
-			} else if (Protocol.opcode(got)  == 2) {
-				grid[x][y] = Server.States.O;
-			}
-			if (Protocol.opcode(got) == 3) {
-				done = true;
-				won = true;
-			}				
-			if (Protocol.opcode(got)  == 4) {
-				done = true;
-				won = false;
-			}
-			if (Protocol.opcode(got) == 5) {
-				done = true;
-				tie = true;
-			}
-			repaint();
+					int x = Protocol.x(got);
+					int y = Protocol.y(got);
+					if (Protocol.opcode(got)  == 1) {
+						grid[x][y] = Server.States.X;
+					} else if (Protocol.opcode(got)  == 2) {
+						grid[x][y] = Server.States.O;
+					}
+					if (Protocol.opcode(got) == 3) {
+						done = true;
+						won = true;
+					}				
+					if (Protocol.opcode(got)  == 4) {
+						done = true;
+						won = false;
+					}
+					if (Protocol.opcode(got) == 5) {
+						done = true;
+						tie = true;
+					}
+					repaint();
 				} catch (IOException e) {}
 
 			}

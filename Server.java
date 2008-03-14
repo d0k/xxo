@@ -108,7 +108,7 @@ public class Server extends Thread {
 			client1.getInputStream().skip(client1.getInputStream().available());
 			client2.getInputStream().skip(client2.getInputStream().available());
 		} catch (IOException e) {}
-		
+
 		new Client(client1).start();
 		new Client(client2).start();
 	}
