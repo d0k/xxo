@@ -41,6 +41,7 @@ public class Start extends Frame implements ActionListener {
 			try {
 				new Client(server.getText());
 			} catch (IOException io) {
+				javax.swing.JOptionPane.showMessageDialog(this, "Error connecting to Server", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
 				io.printStackTrace();
 			}
 		} else if (e.getSource() == start) {
@@ -60,5 +61,5 @@ public class Start extends Frame implements ActionListener {
 
 	public static void main(String[] args) {
 		new Start();
-	}	
+	}
 }

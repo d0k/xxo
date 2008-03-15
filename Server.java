@@ -10,6 +10,14 @@ public class Server extends Thread {
 		X, O, NONE
 	}
 
+	static void clearGrid(States[][] grid) {
+		for(int i = 0; i < grid.length; i++) {
+			for(int j = 0; j < grid[i].length; j++) {
+				grid[i][j] = States.NONE;
+			}
+		}
+	}
+
 	private States[][] grid = new States[3][3];
 
 	public Server() throws IOException {
@@ -17,15 +25,10 @@ public class Server extends Thread {
 	}
 
 	public Server(int port) throws IOException {
-		for(int i = 0; i < grid.length; i++) {
-			for(int j = 0; j < grid[i].length; j++) {
-				grid[i][j] = States.NONE;
-			}
-		}
 		server = new ServerSocket(port);
 	}
 
-	private synchronized void set(Socket client, int x, int y) {
+	private synchronized void set(Socket client, int x, int y) throws IOException {
 		if (grid[x][y] == States.NONE && x < grid.length && y < grid[0].length && client != last) {
 			byte b = 0;
 			if (client == client1) {
@@ -38,10 +41,9 @@ public class Server extends Thread {
 			b |= (x&3) << 2;
 			b |= (y&3);
 
-			try {
-				client1.getOutputStream().write((int)b);
-				client2.getOutputStream().write((int)b);
-			} catch (IOException e) {}
+			client1.getOutputStream().write((int)b);
+			client2.getOutputStream().write((int)b);
+
 			// check for tie
 			boolean tie = true;
 			for (int i = 0; i < grid.length; i++) {
@@ -50,67 +52,77 @@ public class Server extends Thread {
 						tie = false;
 				}
 			}
-			if (tie) {
-				done = true;
-				try {
-					final byte tiebyte = 5 << 4;
-					client1.getOutputStream().write((int)tiebyte);
-					client2.getOutputStream().write((int)tiebyte);
-				} catch (IOException e) {}
-			}
+			if (tie)
+				sendDone(client, true);
 
 			// check for win
 			for (int i = 0; i < grid.length; i++) {
 				if (grid[i][0] != States.NONE && grid[i][0] == grid[i][1] && grid[i][0] == grid[i][2] // waagerecht
 				                                                                                   || grid[0][i] != States.NONE && grid[0][i] == grid[1][i] && grid[0][i] == grid[2][i]) // senkrecht
-					sendDone(client);
+					sendDone(client, false);
 			}
 			if (grid[1][1] != States.NONE && (grid[0][0] == grid[1][1] && grid[0][0] == grid[2][2]
 			                                                                                    || grid[2][0] == grid[1][1] && grid[2][0] == grid[0][2]))
-				sendDone(client);
-			last = client;			
+				sendDone(client, false);
+			last = client;
 		}
 	}
 
-	private void sendDone(Socket client) {
-		final byte win = 3 << 4;
-		final byte loose = 4 << 4;
+	private void sendDone(Socket client, boolean tie) throws IOException {
+		byte win = 3 << 4;
+		byte loose = 4 << 4;
+		final byte clear = 6 << 4;
+		if (tie)
+			win = loose = 5 << 4;
 		if (client == client1) {
-			try {
-				client1.getOutputStream().write((int)win);
-				client2.getOutputStream().write((int)loose);
-			} catch (IOException e) {}
+			client1.getOutputStream().write((int)win);
+			client2.getOutputStream().write((int)loose);
 		} else {
-			try {
-				client2.getOutputStream().write((int)win);
-				client1.getOutputStream().write((int)loose);
-			} catch (IOException e) {}
+			client2.getOutputStream().write((int)win);
+			client1.getOutputStream().write((int)loose);
 		}
-		done = true;
+
+		try {
+			Thread.sleep(2500);
+		} catch (InterruptedException e) {}
+		clearGrid(grid);
+		client2.getOutputStream().write((int)clear);
+		client1.getOutputStream().write((int)clear);
 	}
 
 	@Override
 	public void run() {
-		while (client2 == null && !done) { 
-			Socket client = null;
-			try { 
-				client = server.accept(); 
-				if (client1 == null)
-					client1 = client;
-				else
-					client2 = client;
-			} catch (IOException e) { 
-				e.printStackTrace(); 
+		while (true) {
+			clearGrid(grid);
+			client1 = client2 = null;
+			while ((client1 == null || client2 == null) && !done) {
+				Socket client = null;
+				try {
+					client = server.accept();
+					if (client1 == null)
+						client1 = client;
+					else
+						client2 = client;
+				} catch (IOException e) {}
 			}
-		}
-		// remove data which was already sent
-		try {
-			client1.getInputStream().skip(client1.getInputStream().available());
-			client2.getInputStream().skip(client2.getInputStream().available());
-		} catch (IOException e) {}
 
-		new Client(client1).start();
-		new Client(client2).start();
+			if (done)
+				break;
+			// remove data which was already sent
+			try {
+				client1.getInputStream().skip(client1.getInputStream().available());
+				client2.getInputStream().skip(client2.getInputStream().available());
+			} catch (IOException e) {}
+
+			Client c1 = new Client(client1);
+			Client c2 = new Client(client2);
+			c1.start();
+			c2.start();
+			try {
+				c1.join();
+				c2.join();
+			} catch (InterruptedException e) {}
+		}
 	}
 
 	@Override
@@ -135,10 +147,23 @@ public class Server extends Thread {
 			while (!done) {
 				try {
 					int got = client.getInputStream().read();
+					if (got == -1) throw new IOException();
 					if (Protocol.opcode(got) == 0) {
 						set(client, Protocol.x(got), Protocol.y(got));
 					}
-				} catch (IOException e) {}
+				} catch (IOException e) {
+					final int fail = 7 << 4;
+					if (client1 != null) {
+						try { client1.getOutputStream().write(fail); } catch (IOException io) {}
+						try { client1.close(); } catch (IOException io) {}
+					}
+					if (client2 != null) {
+						try { client2.getOutputStream().write(fail); } catch (IOException io) {}
+						try { client2.close(); } catch (IOException io) {}
+					}
+					client1 = client2 = null;
+					break;
+				}
 			}
 		}
 	}

@@ -1,6 +1,6 @@
 /* Protocol:
  * OOOOXXYY
- * 
+ *
  * O: Opcode
  *    0 = client to server to set field
  *    1 = server to client to set "X"
@@ -8,11 +8,13 @@
  *    3 = server to client to indicate win
  *    4 = server to client to indicate loss
  *    5 = server to client to indicate tie
+ *    6 = server to client to indicate new round
+ *    7 = server to client to indicate failure
  * X: X coord
  * Y: Y coord
  */
 
-public class Protocol {	
+public class Protocol {
 	public static int opcode(int input) {
 		return (input & 0xF0) >> 4;
 	}
