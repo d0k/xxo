@@ -4,7 +4,8 @@ import java.net.*;
 public class Server extends Thread {
 	private ServerSocket server;
 	private Socket client1 = null, client2 = null, last = null;
-	boolean done = false;
+	private boolean done = false;
+	private int port;
 
 	public enum States {
 		X, O, NONE
@@ -20,12 +21,12 @@ public class Server extends Thread {
 
 	private States[][] grid = new States[3][3];
 
-	public Server() throws IOException {
+	public Server() {
 		this(12345);
 	}
 
-	public Server(int port) throws IOException {
-		server = new ServerSocket(port);
+	public Server(int port) {
+		this.port = port;
 	}
 
 	private synchronized void set(Socket client, int x, int y) throws IOException {
@@ -44,17 +45,6 @@ public class Server extends Thread {
 			client1.getOutputStream().write((int)b);
 			client2.getOutputStream().write((int)b);
 
-			// check for tie
-			boolean tie = true;
-			for (int i = 0; i < grid.length; i++) {
-				for (int j = 0; j < grid[0].length; j++) {
-					if (grid[i][j] == States.NONE)
-						tie = false;
-				}
-			}
-			if (tie)
-				sendDone(client, true);
-
 			// check for win
 			for (int i = 0; i < grid.length; i++) {
 				if (grid[i][0] != States.NONE && grid[i][0] == grid[i][1] && grid[i][0] == grid[i][2] // waagerecht
@@ -64,6 +54,20 @@ public class Server extends Thread {
 			if (grid[1][1] != States.NONE && (grid[0][0] == grid[1][1] && grid[0][0] == grid[2][2]
 			                                                                                    || grid[2][0] == grid[1][1] && grid[2][0] == grid[0][2]))
 				sendDone(client, false);
+
+			if (!done) {
+				// check for tie
+				boolean tie = true;
+				for (int i = 0; i < grid.length; i++) {
+					for (int j = 0; j < grid[0].length; j++) {
+						if (grid[i][j] == States.NONE)
+							tie = false;
+					}
+				}
+				if (tie)
+					sendDone(client, true);
+			}
+
 			last = client;
 		}
 	}
@@ -95,6 +99,12 @@ public class Server extends Thread {
 		while (true) {
 			clearGrid(grid);
 			client1 = client2 = null;
+			try {
+				server = new ServerSocket(port);
+			} catch (IOException e) {
+				System.out.println(e.getMessage());
+				break;
+			}
 			while ((client1 == null || client2 == null) && !done) {
 				Socket client = null;
 				try {
@@ -105,6 +115,9 @@ public class Server extends Thread {
 						client2 = client;
 				} catch (IOException e) {}
 			}
+			try {
+				server.close();
+			} catch (IOException e) {}
 
 			if (done)
 				break;
@@ -130,7 +143,9 @@ public class Server extends Thread {
 		super.interrupt();
 		done = true;
 		try {
-			server.close();
+			if (server != null) {
+				server.close();
+			}
 		} catch (IOException e) {}
 	}
 

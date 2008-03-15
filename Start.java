@@ -41,18 +41,11 @@ public class Start extends Frame implements ActionListener {
 			try {
 				new Client(server.getText());
 			} catch (IOException io) {
-				javax.swing.JOptionPane.showMessageDialog(this, "Error connecting to Server", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
-				io.printStackTrace();
+				javax.swing.JOptionPane.showMessageDialog(this, "Error connecting to Server: " + io.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
 			}
 		} else if (e.getSource() == start) {
-			try {
-				if (s != null)
-					s.interrupt();
-				s = new Server();
-				s.start();
-			} catch (IOException io) {
-				io.printStackTrace();
-			}
+			s = new Server();
+			s.start();
 		} else if (e.getSource() == stop) {
 			if (s != null)
 				s.interrupt();

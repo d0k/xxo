@@ -19,13 +19,13 @@ public class Client extends Frame {
 		setSize(300, 300);
 		setLocation((int)(Math.random()*500+200), (int)(Math.random()*500+200));
 		setResizable(false);
-		setVisible(true);
 		try {
 			this.server = new Socket(server, port);
 		} catch (IOException e) {
 			dispose();
 			throw e;
 		}
+		setVisible(true);
 		addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing (WindowEvent e) {
