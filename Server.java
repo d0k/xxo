@@ -11,7 +11,7 @@ public class Server extends Thread {
 		X, O, NONE
 	}
 
-	static void clearGrid(States[][] grid) {
+	public static void clearGrid(States[][] grid) {
 		for(int i = 0; i < grid.length; i++) {
 			for(int j = 0; j < grid[i].length; j++) {
 				grid[i][j] = States.NONE;
@@ -29,6 +29,15 @@ public class Server extends Thread {
 		this.port = port;
 	}
 
+	private void write(int tobothclients) throws IOException {
+		write(tobothclients, tobothclients);
+	}
+
+	private void write(int toclient1, int toclient2) throws IOException {
+		client1.getOutputStream().write(toclient1);
+		client2.getOutputStream().write(toclient2);
+	}
+
 	private synchronized void set(Socket client, int x, int y) throws IOException {
 		if (grid[x][y] == States.NONE && x < grid.length && y < grid[0].length && client != last) {
 			byte b = 0;
@@ -42,8 +51,7 @@ public class Server extends Thread {
 			b |= (x&3) << 2;
 			b |= (y&3);
 
-			client1.getOutputStream().write((int)b);
-			client2.getOutputStream().write((int)b);
+			write((int)b);
 
 			// check for win
 			for (int i = 0; i < grid.length; i++) {
@@ -73,25 +81,22 @@ public class Server extends Thread {
 	}
 
 	private void sendDone(Socket client, boolean tie) throws IOException {
-		byte win = 3 << 4;
-		byte loose = 4 << 4;
-		final byte clear = 6 << 4;
+		final byte win = 3 << 4;
+		final byte lose = 4 << 4;
+
 		if (tie)
-			win = loose = 5 << 4;
-		if (client == client1) {
-			client1.getOutputStream().write((int)win);
-			client2.getOutputStream().write((int)loose);
-		} else {
-			client2.getOutputStream().write((int)win);
-			client1.getOutputStream().write((int)loose);
-		}
+			write(5 << 4);
+		else if (client == client1)
+			write(win, lose);
+		else
+			write(lose, win);
 
 		try {
 			Thread.sleep(2500);
 		} catch (InterruptedException e) {}
+
 		clearGrid(grid);
-		client2.getOutputStream().write((int)clear);
-		client1.getOutputStream().write((int)clear);
+		write(6 << 4);
 	}
 
 	@Override
@@ -143,9 +148,8 @@ public class Server extends Thread {
 		super.interrupt();
 		done = true;
 		try {
-			if (server != null) {
+			if (server != null)
 				server.close();
-			}
 		} catch (IOException e) {}
 	}
 
@@ -162,10 +166,10 @@ public class Server extends Thread {
 			while (!done) {
 				try {
 					int got = client.getInputStream().read();
-					if (got == -1) throw new IOException();
-					if (Protocol.opcode(got) == 0) {
+					if (got == -1)
+						throw new IOException();
+					if (Protocol.opcode(got) == 0)
 						set(client, Protocol.x(got), Protocol.y(got));
-					}
 				} catch (IOException e) {
 					final int fail = 7 << 4;
 					if (client1 != null) {
