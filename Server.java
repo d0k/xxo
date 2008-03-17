@@ -3,7 +3,7 @@ import java.net.*;
 
 public class Server extends Thread {
 	private ServerSocket server;
-	private Socket client1 = null, client2 = null, last = null;
+	private Socket client1, client2, last = null;
 	private boolean done = false;
 	private int port;
 
@@ -43,10 +43,10 @@ public class Server extends Thread {
 			byte b = 0;
 			if (client == client1) {
 				grid[x][y] = States.X;
-				b = 1 << 4;
+				b = Protocol.SETX << 4;
 			} else if (client == client2) {
 				grid[x][y] = States.O;
-				b = 2 << 4;
+				b = Protocol.SETO << 4;
 			}
 			b |= (x&3) << 2;
 			b |= (y&3);
@@ -81,27 +81,32 @@ public class Server extends Thread {
 	}
 
 	private void sendDone(Socket client, boolean tie) throws IOException {
-		final byte win = 3 << 4;
-		final byte lose = 4 << 4;
+		final byte win = Protocol.WIN << 4;
+		final byte lose = Protocol.LOSS << 4;
 
-		if (tie)
-			write(5 << 4);
-		else if (client == client1)
+		if (tie) {
+			write(Protocol.TIE << 4);
+			System.err.println("Tie!");
+		} else if (client == client1) {
 			write(win, lose);
-		else
+			System.err.println("X has won!");
+		} else {
 			write(lose, win);
-
+			System.err.println("O has won!");
+		}
 		try {
 			Thread.sleep(2500);
 		} catch (InterruptedException e) {}
 
 		clearGrid(grid);
-		write(6 << 4);
+		write(Protocol.NEWROUND << 4);
+		System.err.println("Starting new round ...");
 	}
 
 	@Override
 	public void run() {
-		while (true) {
+		while (!isInterrupted()) {
+			System.err.println("Server waiting for connections ...");
 			clearGrid(grid);
 			client1 = client2 = null;
 			try {
@@ -118,6 +123,7 @@ public class Server extends Thread {
 						client1 = client;
 					else
 						client2 = client;
+					System.err.println("New connection from " + client.getInetAddress());
 				} catch (IOException e) {}
 			}
 			try {
@@ -139,7 +145,7 @@ public class Server extends Thread {
 			try {
 				c1.join();
 				c2.join();
-			} catch (InterruptedException e) {}
+			} catch (InterruptedException e) { break; }
 		}
 	}
 
@@ -151,6 +157,17 @@ public class Server extends Thread {
 			if (server != null)
 				server.close();
 		} catch (IOException e) {}
+		killclient(client1);
+		killclient(client2);
+		System.err.println("Server terminated!");
+	}
+
+	private synchronized void killclient(Socket client) {
+		if (client != null) {
+			try { client.getOutputStream().write(Protocol.FAIL << 4); } catch (IOException io) {}
+			try { client.close(); } catch (IOException io) {}
+		}
+		client = null;
 	}
 
 	private class Client extends Thread {
@@ -166,21 +183,13 @@ public class Server extends Thread {
 			while (!done) {
 				try {
 					int got = client.getInputStream().read();
-					if (got == -1)
+					if (got == -1 || client == null)
 						throw new IOException();
-					if (Protocol.opcode(got) == 0)
+					if (Protocol.opcode(got) == Protocol.SET)
 						set(client, Protocol.x(got), Protocol.y(got));
 				} catch (IOException e) {
-					final int fail = 7 << 4;
-					if (client1 != null) {
-						try { client1.getOutputStream().write(fail); } catch (IOException io) {}
-						try { client1.close(); } catch (IOException io) {}
-					}
-					if (client2 != null) {
-						try { client2.getOutputStream().write(fail); } catch (IOException io) {}
-						try { client2.close(); } catch (IOException io) {}
-					}
-					client1 = client2 = null;
+					killclient(client1);
+					killclient(client2);
 					break;
 				}
 			}

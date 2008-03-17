@@ -49,6 +49,7 @@ public class Start extends Frame implements ActionListener {
 		} else if (e.getSource() == stop) {
 			if (s != null)
 				s.interrupt();
+			s = null;
 		}
 	}
 

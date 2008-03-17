@@ -86,37 +86,38 @@ public class Client extends Frame {
 					byte got = (byte)server.getInputStream().read();
 					int x = Protocol.x(got);
 					int y = Protocol.y(got);
-					if (Protocol.opcode(got)  == 1) {
+					if (Protocol.opcode(got) == Protocol.SETX) {
 						grid[x][y] = Server.States.X;
-					} else if (Protocol.opcode(got)  == 2) {
+					} else if (Protocol.opcode(got) == Protocol.SETO) {
 						grid[x][y] = Server.States.O;
 					}
-					if (Protocol.opcode(got) == 3) {
+					if (Protocol.opcode(got) == Protocol.WIN) {
 						done = true;
 						won = true;
 					}
-					if (Protocol.opcode(got)  == 4) {
+					if (Protocol.opcode(got)  == Protocol.LOSS) {
 						done = true;
 						won = false;
 					}
-					if (Protocol.opcode(got) == 5) {
+					if (Protocol.opcode(got) == Protocol.TIE) {
 						done = true;
 						tie = true;
 					}
-					if (Protocol.opcode(got) == 6) {
+					if (Protocol.opcode(got) == Protocol.NEWROUND) {
 						done = false;
 						tie = false;
 						won = false;
 						Server.clearGrid(grid);
 					}
-					if (Protocol.opcode(got) == 7) {
-						server.close();
-						dispose();
+					if (Protocol.opcode(got) == Protocol.FAIL) {
+						setVisible(false); // TODO: show error message
 						break;
 					}
 					repaint();
-				} catch (IOException e) {}
-
+				} catch (IOException e) {
+					setVisible(false); // TODO: show error message
+					break;
+				}
 			}
 		}
 	}
