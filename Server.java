@@ -3,7 +3,7 @@ import java.net.*;
 
 public class Server extends Thread {
 	private ServerSocket server;
-	private Socket client1, client2, last = null;
+	private Socket client1, client2, last;
 	private boolean done = false;
 	private int port;
 
@@ -130,8 +130,12 @@ public class Server extends Thread {
 				server.close();
 			} catch (IOException e) {}
 
+			// pick the beginner
+			last = (Math.random() >= 0.5) ? client1 : client2;
+
 			if (done)
 				break;
+
 			// remove data which was already sent
 			try {
 				client1.getInputStream().skip(client1.getInputStream().available());
