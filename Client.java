@@ -17,7 +17,10 @@ public class Client extends Frame {
 	public Client(String server, int port) throws UnknownHostException, IOException {
 		super("Tic-Tac-Toe");
 		setSize(300, 300);
-		setLocation((int)(Math.random()*500+200), (int)(Math.random()*500+200));
+
+		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+		setLocation((int)(Math.random()*(dim.getHeight()-300)), (int)(Math.random()*(dim.getHeight()-300)));
+
 		setResizable(false);
 		try {
 			this.server = new Socket(server, port);
@@ -110,12 +113,16 @@ public class Client extends Frame {
 						Server.clearGrid(grid);
 					}
 					if (Protocol.opcode(got) == Protocol.FAIL) {
-						setVisible(false); // TODO: show error message
+						new MessageBox(getTitle(), "Kicked by Server");
+						setVisible(false);
 						break;
 					}
 					repaint();
 				} catch (IOException e) {
-					setVisible(false); // TODO: show error message
+					if (!isInterrupted()) {
+						new MessageBox(getTitle(), "Connection failed: " + e.getMessage());
+						setVisible(false);
+					}
 					break;
 				}
 			}

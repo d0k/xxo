@@ -112,7 +112,7 @@ public class Server extends Thread {
 			try {
 				server = new ServerSocket(port);
 			} catch (IOException e) {
-				System.out.println(e.getMessage());
+				System.err.println(e.getMessage());
 				break;
 			}
 			while ((client1 == null || client2 == null) && !done) {

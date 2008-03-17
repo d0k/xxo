@@ -33,6 +33,8 @@ public class Start extends Frame implements ActionListener {
 			}
 		});
 		setSize(200, 200);
+		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+		setLocation((int)(Math.random()*(dim.getHeight()-200)), (int)(Math.random()*(dim.getHeight()-200)));
 		setVisible(true);
 	}
 
@@ -41,9 +43,11 @@ public class Start extends Frame implements ActionListener {
 			try {
 				new Client(server.getText());
 			} catch (IOException io) {
-				javax.swing.JOptionPane.showMessageDialog(this, "Error connecting to Server: " + io.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+				new MessageBox(getTitle(), "Error connecting to Server: " + io.getMessage());
 			}
 		} else if (e.getSource() == start) {
+			if (s != null)
+				s.interrupt();
 			s = new Server();
 			s.start();
 		} else if (e.getSource() == stop) {
