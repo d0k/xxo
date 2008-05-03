@@ -3,14 +3,15 @@
 	<target name="compile">
 		<javac srcdir="." destdir="." target="1.5" source="1.5"/>
 	</target>
-	
+
 	<target name="jar" depends="compile">
 		<manifest file="MANIFEST.MF">
 			<attribute name="Main-Class" value="Start"/>
+			<attribute name="SplashScreen-Image" value="xxo.png"/>
 		</manifest>
-		<jar destfile="xxo.jar" manifest="MANIFEST.MF" basedir="." includes="*.class"/>
+		<jar destfile="xxo.jar" manifest="MANIFEST.MF" basedir="." includes="*.class xxo.png"/>
 	</target>
-	
+
 	<target name="clean">
 		<delete>
 			<fileset dir=".">
@@ -19,5 +20,4 @@
 			</fileset>
 		</delete>
 	</target>
-	
 </project>
