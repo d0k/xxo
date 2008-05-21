@@ -187,7 +187,7 @@ public class Server extends Thread {
 			while (!done) {
 				try {
 					int got = client.getInputStream().read();
-					if (got == -1 || client == null)
+					if (got == -1/* || client == null*/)
 						throw new IOException();
 					if (Protocol.opcode(got) == Protocol.SET)
 						set(client, Protocol.x(got), Protocol.y(got));

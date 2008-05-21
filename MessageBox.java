@@ -18,7 +18,7 @@ public class MessageBox extends Frame implements ActionListener {
 
 		pack();
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-		setLocation((int)(dim.getWidth()/2-getWidth()/2), (int)(dim.getHeight()/2-getHeight()/2));
+		setLocation(((int)dim.getWidth()/2-(int)getWidth()/2), ((int)dim.getHeight()/2-(int)getHeight()/2));
 		setVisible(true);
 	}
 

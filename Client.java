@@ -3,7 +3,7 @@ import java.awt.event.*;
 import java.io.*;
 import java.net.*;
 
-public class Client extends Frame {
+public final class Client extends Frame {
 	private static final long serialVersionUID = 0L;
 	private Server.States[][] grid = new Server.States[3][3];
 	private Socket server;
@@ -50,7 +50,10 @@ public class Client extends Frame {
 			int b = (x&3) << 2;
 			b |= (y&3);
 			server.getOutputStream().write(b);
-		} catch (IOException e) {}
+		} catch (IOException e) {
+			new MessageBox(getTitle(), "Connection failed: " + e.getMessage());
+			setVisible(false);
+		}
 	}
 
 	@Override
