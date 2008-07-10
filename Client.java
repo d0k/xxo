@@ -11,7 +11,7 @@ public final class Client extends Frame {
 	private Getter get = new Getter();
 
 	public Client(String server) throws UnknownHostException, IOException {
-		this(server, 12345);
+		this(server, Protocol.DEFAULTPORT);
 	}
 
 	public Client(String server, int port) throws UnknownHostException, IOException {

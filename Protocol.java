@@ -17,6 +17,7 @@
 public class Protocol {
 	public static final int SET = 0, SETX = 1, SETO = 2, WIN = 3, LOSS = 4,
 	TIE = 5, NEWROUND = 6, FAIL = 7;
+	public static final int DEFAULTPORT = 31137;
 
 	public static int opcode(int input) {
 		return (input & 0xF0) >> 4;

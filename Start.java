@@ -5,6 +5,8 @@ import java.io.IOException;
 public class Start extends Frame implements ActionListener {
 	private static final long serialVersionUID = 0L;
 	private TextField server;
+	private String host;
+	private int port;
 	private Button c, start, stop;
 	private Server s = null;
 
@@ -16,7 +18,7 @@ public class Start extends Frame implements ActionListener {
 		c.addActionListener(this);
 		add(c);
 
-		server = new TextField("localhost");
+		server = new TextField("localhost:31137");
 		add(server);
 
 		start = new Button("Start Server");
@@ -41,19 +43,36 @@ public class Start extends Frame implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == c) {
 			try {
-				new Client(server.getText());
+				parseHost();
+				new Client(host, port);
 			} catch (IOException io) {
 				new MessageBox(getTitle(), "Error connecting to Server: " + io.getMessage());
 			}
 		} else if (e.getSource() == start) {
 			if (s != null)
 				s.interrupt();
-			s = new Server();
+			parseHost();
+			s = new Server(port);
 			s.start();
 		} else if (e.getSource() == stop) {
 			if (s != null)
 				s.interrupt();
 			s = null;
+		}
+	}
+
+	public void parseHost() {
+		String[] socket = server.getText().split(":");
+		host = socket[0];
+		if (socket.length > 1) {
+			try {
+				int port = Integer.parseInt(socket[1]);
+				this.port = (port >= 1024 && port < 0xFFFF) ? port : Protocol.DEFAULTPORT;
+			} catch (NumberFormatException e) {
+				this.port = Protocol.DEFAULTPORT;
+			}
+		} else {
+			this.port = Protocol.DEFAULTPORT;
 		}
 	}
 

@@ -22,7 +22,7 @@ public class Server extends Thread {
 	private States[][] grid = new States[3][3];
 
 	public Server() {
-		this(12345);
+		this(Protocol.DEFAULTPORT);
 	}
 
 	public Server(int port) {
